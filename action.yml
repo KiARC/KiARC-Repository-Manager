@@ -1,0 +1,83 @@
+name: KiARC Repository Manager
+description: A simple way to manage your repository!
+author: 'KiARC'
+inputs:
+  generate-tdl:
+    description: Generate a todo list
+    required: false
+    default: 'true'
+  tdlg-path:
+    description: Path for todo list generator
+    required: false
+    default: './'
+  tdlg-commit-message:
+    description: Commit message for todo list generator
+    required: false
+    default: 'Automated ToDo List Generator'
+  format-code:
+    description: Format the repository's code
+    required: false
+    default: 'true'
+  format-path:
+    description: Path for code formatter
+    required: false
+    default: './'
+  format-commit-message:
+    description: Commit message for code formatter
+    required: false
+    default: 'Automated Code Formatting'
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '16'
+    - shell: bash
+      run: |
+        git pull origin "${{ github.ref_name }}"
+        if [ ${{ inputs.format-code }} ]; then
+          npm i google-java-format
+          cd "${{ github.workspace }}/${{ inputs.format-path }}"
+          readarray -t files < <(ls -AR1 ./ | grep -Ei '.*\.java' -)
+          for file in "${files[@]}"; do
+            npx google-java-format -r "$file"
+          done
+          git config user.name "KiARC Repository Manager CF"
+          git config user.email "<>"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit --all -m "${{ inputs.format-commit-message }}" -m "Using the KiARC Repository Manager"
+          fi
+        fi
+        if [ ${{ inputs.generate-tdl }} ] ; then
+          cd "${{ inputs.tdlg-path }}"
+          readarray -t todos < <(grep -Enri '\/+\**\ *.*todo' *.java | sed -e 's/: */: /g')
+          important=()
+          nonimportant=()
+          for todo in "${todos[@]}"; do
+            if [[ "$todo" = *"[IMPORTANT]"* ]]; then
+              important+=("$todo")
+            else
+              nonimportant+=("$todo")
+            fi
+          done
+          echo Important TODOs: > todolist.txt
+          for todo in "${important[@]}"; do
+            echo "$todo" >> todolist.txt
+          done
+          echo --------------------------------------------------------------------------------------------------------- >> todolist.txt
+          echo Non-important TODOs: >> todolist.txt
+          for todo in "${nonimportant[@]}"; do
+            echo "$todo" >> todolist.txt
+          done
+          git config user.name "KiARC Repository Manager TDLG"
+          git config user.email "<>"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add todolist.txt
+            git commit -m "${{ inputs.tdlg-commit-message }}" -m "Using the KiARC Repository Manager"
+          fi
+          cd "${{ github.workspace }}"
+          cd ..
+        fi
+        git push origin "${{ github.ref_name }}"
