@@ -1,6 +1,6 @@
 # KiARC Repository Manager
 ## What is this?
-This is a GitHub action that can help you keep a repository in order! It supports both automated ToDo List generation and code formatting (via [Google Java Format](https://github.com/google/google-java-format)) for Java files at the moment.
+This is a GitHub action that can help you keep a repository in order! It supports both automated ToDo List generation and code formatting (via [Google Java Format v1.13.0](https://github.com/google/google-java-format)) for Java files at the moment.
 ## Usage
 Add this to your repository as `.github/workflows/KiARC Repository Manager.yml`, or just the `kiarc-repository-manager` job to an existing workflow:
 ```yaml
