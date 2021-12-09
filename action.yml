@@ -37,12 +37,10 @@ runs:
       run: |
         git pull origin "${{ github.ref_name }}"
         if [ ${{ inputs.format-code }} ]; then
-          npm i google-java-format
           cd "${{ github.workspace }}/${{ inputs.format-path }}"
-          readarray -t files < <(ls -AR1 ./ | grep -Ei '.*\.java' -)
-          for file in "${files[@]}"; do
-            npx google-java-format -r "$file"
-          done
+          wget -O ~/gjf.jar https://github.com/google/google-java-format/releases/download/v1.13.0/google-java-format-1.13.0-all-deps.jar
+          find ./ -name *.java -exec java --add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED -jar ~/gjf.jar -r {} +
+          rm ~/gjf.jar
           git config user.name "KiARC Repository Manager CF"
           git config user.email "<>"
           if [ -n "$(git status --porcelain)" ]; then
@@ -51,7 +49,7 @@ runs:
           fi
         fi
         if [ ${{ inputs.generate-tdl }} ] ; then
-          cd "${{ inputs.tdlg-path }}"
+          cd "${{ github.workspace }}/${{ inputs.tdlg-path }}"
           readarray -t todos < <(grep -Enri '\/+\**\ *.*todo' *.java | sed -e 's/: */: /g')
           important=()
           nonimportant=()
@@ -78,6 +76,5 @@ runs:
             git commit -m "${{ inputs.tdlg-commit-message }}" -m "Using the KiARC Repository Manager"
           fi
           cd "${{ github.workspace }}"
-          cd ..
         fi
         git push origin "${{ github.ref_name }}"
