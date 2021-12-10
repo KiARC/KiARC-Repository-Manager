@@ -35,11 +35,12 @@ runs:
         node-version: '16'
     - shell: bash
       run: |
+        shopt -s globstar
         git pull origin "${{ github.ref_name }}"
         if [ ${{ inputs.format-code }} ]; then
           cd "${{ github.workspace }}/${{ inputs.format-path }}"
           wget -O ~/gjf.jar https://github.com/google/google-java-format/releases/download/v1.13.0/google-java-format-1.13.0-all-deps.jar
-          find ./ -name *.java -exec java --add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED -jar ~/gjf.jar -r {} +
+          java --add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED -jar ~/gjf.jar -r ./**/*.java
           rm ~/gjf.jar
           git config user.name "KiARC Repository Manager CF"
           git config user.email "<>"
@@ -50,7 +51,7 @@ runs:
         fi
         if [ ${{ inputs.generate-tdl }} ] ; then
           cd "${{ github.workspace }}/${{ inputs.tdlg-path }}"
-          readarray -t todos < <(grep -Enri '\/+\**\ *.*todo' *.java | sed -e 's/: */: /g')
+          readarray -t todos < <(grep -Enri '\/+\**\ *.*todo' ./**/*.java | sed -e 's/: */: /g')
           important=()
           nonimportant=()
           for todo in "${todos[@]}"; do
